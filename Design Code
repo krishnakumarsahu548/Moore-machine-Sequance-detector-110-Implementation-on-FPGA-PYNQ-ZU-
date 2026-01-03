@@ -1,0 +1,108 @@
+`timescale 1ns / 1ps
+module seq_110_moore(
+    input  wire x,          // SW0
+    input  wire rst,        // BTN0
+    input  wire clock_p,    // LVDS clock +
+    input  wire clock_n,    // LVDS clock -
+    output reg  y           // LED0
+);
+
+/////////////////////////////
+// LVDS CLOCK BUFFER
+/////////////////////////////
+wire clock;
+IBUFDS #(
+    .DIFF_TERM("TRUE")
+) ibufds_inst (
+    .I (clock_p),
+    .IB(clock_n),
+    .O (clock)
+);
+
+/////////////////////////////
+// ASYNC INPUT SYNCHRONIZER
+/////////////////////////////
+reg rst_ff1, rst_ff2;
+reg x_ff1,   x_ff2;
+
+always @(posedge clock) begin
+    rst_ff1 <= rst;
+    rst_ff2 <= rst_ff1;
+
+    x_ff1   <= x;
+    x_ff2   <= x_ff1;
+end
+
+wire rst_sync = rst_ff2;
+wire x_sync   = x_ff2;
+
+/////////////////////////////
+// CLOCK DIVIDER (ENABLE BASED)
+/////////////////////////////
+reg [25:0] clk_div;
+wire slow_en;
+
+always @(posedge clock) begin
+    if (rst_sync)
+        clk_div <= 26'd0;
+    else
+        clk_div <= clk_div + 1'b1;
+end
+
+// ~1 second enable pulse
+//assign slow_en = (clk_div == 26'd0);   //FPGA Implementation
+assign slow_en = (clk_div[5]);   // fast simulation
+/////////////////////////////
+// FSM STATE ENCODING
+/////////////////////////////
+parameter A = 2'b00,
+          B = 2'b01,
+          C = 2'b10,
+          D = 2'b11;
+
+reg [1:0] pstate, nstate;
+
+/////////////////////////////
+// STATE REGISTER
+/////////////////////////////
+always @(posedge clock) begin
+    if (rst_sync)
+        pstate <= A;
+    else if (slow_en)
+        pstate <= nstate;
+end
+
+/////////////////////////////
+// NEXT STATE LOGIC
+/////////////////////////////
+always @(*) begin
+    case (pstate)
+        A: nstate = (x_sync) ? B : A;
+        B: nstate = (x_sync) ? C : A;
+        C: nstate = (x_sync) ? C : D;
+        D: nstate = (x_sync) ? B : A;
+        default: nstate = A;
+    endcase
+end
+
+/////////////////////////////
+// OUTPUT LOGIC (MOORE)
+/////////////////////////////
+always @(*) begin
+    y = (pstate == D);   // LED ON only in state D
+end
+
+/////////////////////////////
+// ILA (DEBUG ONLY)
+/////////////////////////////
+ila_0 ila_inst (
+    .clk   (clock),
+    .probe0(clock),
+    .probe1(rst_sync),
+    .probe2(x_sync),
+    .probe3(pstate),
+    .probe4(nstate),
+    .probe5(y)
+);
+
+endmodule
