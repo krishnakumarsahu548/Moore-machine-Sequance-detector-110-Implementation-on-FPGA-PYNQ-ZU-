@@ -17,6 +17,7 @@ The output is asserted **only when the FSM reaches the detection state**, consis
 ---
 
 ## 🔹 FSM Description
+<img width="1600" height="1394" alt="image" src="https://github.com/user-attachments/assets/18e6a095-2c4e-415d-af70-740145bd40b0" />
 
 ### State Encoding
 | State | Binary |
@@ -69,13 +70,32 @@ Overlapping sequence detection is supported.
 A behavioral testbench is provided to verify FSM operation using waveform analysis.
 
 <img width="1106" height="417" alt="image" src="https://github.com/user-attachments/assets/c589d5b5-8310-474d-a668-fe18f67bfb0b" />
+## clock-enable signal
+// slow_en is used as a clock-enable signal.
+// In hardware, a full counter comparison is used to generate a ~1 second enable pulse.
+// In simulation, a lower counter bit is selected to reduce simulation time.
+// This approach preserves functional correctness while accelerating simulation.
 
----
 
 ## 🔹 FPGA Verification
 
 The design was successfully implemented and tested on the PYNQ-ZU FPGA.  
 LED output confirms correct detection of the target sequence.
+## ILA Debug Setup
+
+Signals probed using ILA:
+- clock
+- rst_sync
+- x_sync
+- pstate
+- nstate
+- y
+
+ILA was used to confirm correct state transitions and output assertion.
+Debug paths were excluded from timing analysis using false-path constraints.
+<img width="977" height="882" alt="image" src="https://github.com/user-attachments/assets/d64ddd4d-0d75-4ae0-b166-8deb8492c10b" />
+## ILA Result 
+<img width="1920" height="1080" alt="Screenshot (1389)" src="https://github.com/user-attachments/assets/b71774c1-93af-4081-b9eb-549fb8af13c6" />
 
 ---
 
