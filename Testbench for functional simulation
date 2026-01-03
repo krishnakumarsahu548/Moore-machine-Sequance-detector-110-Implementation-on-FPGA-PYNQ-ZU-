@@ -1,0 +1,80 @@
+`timescale 1ns / 1ps
+
+module tb_seq_110_moore;
+
+    // Testbench signals
+    reg x;
+    reg rst;
+    reg clock_p;
+    reg clock_n;
+    wire y;
+
+    // DUT instance
+    seq_110_moore dut (
+        .x(x),
+        .rst(rst),
+        .clock_p(clock_p),
+        .clock_n(clock_n),
+        .y(y)
+    );
+
+    // -------------------------------------------------
+    // LVDS CLOCK GENERATION (125 MHz)
+    // Period = 8 ns
+    // -------------------------------------------------
+    initial begin
+        clock_p = 0;
+        clock_n = 1;
+        forever begin
+            #4 clock_p = ~clock_p;
+            clock_n = ~clock_p;   // differential
+        end
+    end
+
+    // -------------------------------------------------
+    // STIMULUS
+    // -------------------------------------------------
+    initial begin
+        // Initialize
+        rst = 1;
+        x   = 0;
+
+        // Hold reset for some time
+        #50;
+        rst = 0;
+
+        // Wait few cycles
+        #100;
+
+        // -------------------------------
+        // Apply sequence: 1 → 1 → 0
+        // Each change spaced far apart
+        // because FSM updates on slow_en
+        // -------------------------------
+
+        x = 1;
+        #200;   // wait long enough (sim slow)
+
+        x = 1;
+        #200;
+
+        x = 0;
+        #200;
+
+        // Extra wait to observe output
+        #200;
+        
+        
+        x = 1;
+        #200;   // wait long enough (sim slow)
+
+        x = 1;
+        #200;
+
+        x = 0;
+        #200;
+
+    //    $finish;
+    end
+
+endmodule
