@@ -1,0 +1,63 @@
+################################################################################
+# PYNQ-ZU Rev-3.B
+# FINAL XDC - Sequence Detector 110 (Moore FSM)
+# Clock  : LVDS 125 MHz (Si5340)
+# Inputs : BTN0 (rst), SW0 (x)
+# Output : LED0 (y)
+################################################################################
+
+########################
+# DIFFERENTIAL LVDS CLOCK (125 MHz)
+########################
+set_property PACKAGE_PIN K4 [get_ports clock_p]
+set_property PACKAGE_PIN K3 [get_ports clock_n]
+set_property IOSTANDARD LVDS [get_ports clock_p]
+set_property IOSTANDARD LVDS [get_ports clock_n]
+
+# Primary clock definition
+create_clock -name clk_125MHz -period 8.000 [get_ports clock_p]
+
+########################
+# RESET BUTTON (BTN0) - ASYNC INPUT
+########################
+set_property PACKAGE_PIN AH14 [get_ports rst]
+set_property IOSTANDARD LVCMOS12 [get_ports rst]
+set_property PULLUP true [get_ports rst]
+
+########################
+# INPUT SWITCH (SW0) - ASYNC INPUT
+########################
+set_property PACKAGE_PIN AA12 [get_ports x]
+set_property IOSTANDARD LVCMOS12 [get_ports x]
+
+########################
+# OUTPUT LED (LED0)
+########################
+set_property PACKAGE_PIN B5 [get_ports y]
+set_property IOSTANDARD LVCMOS12 [get_ports y]
+
+########################
+# TIMING CONSTRAINTS FOR ASYNC INPUTS
+########################
+# rst and x are asynchronous to system clock
+set_clock_groups -asynchronous \
+    -group [get_ports rst] \
+    -group [get_clocks clk_125MHz]
+
+set_clock_groups -asynchronous \
+    -group [get_ports x] \
+    -group [get_clocks clk_125MHz]
+
+# Assume zero external delay (remove hold pessimism)
+set_input_delay -clock clk_125MHz -min 0.0 [get_ports rst]
+set_input_delay -clock clk_125MHz -min 0.0 [get_ports x]
+
+########################
+# ILA DEBUG LOGIC - REMOVE FROM TIMING
+########################
+# ILA is debug-only, not functional logic
+set_false_path -to [get_cells -hier *ila_inst*]
+
+################################################################################
+# END OF FINAL XDC
+################################################################################
